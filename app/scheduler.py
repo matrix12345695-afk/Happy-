@@ -1,10 +1,11 @@
-from datetime import date
+from datetime import date, datetime
 from sqlalchemy import select
 from app.database import async_session
 from app.models import Birthday
 import random
 
 
+# 🎂 Основные напоминания (за 30 / 14 / 2 / 1 / 0 дней)
 async def check_birthdays(bot):
     async with async_session() as session:
         result = await session.execute(select(Birthday))
@@ -52,3 +53,36 @@ async def check_birthdays(bot):
             continue
 
         await bot.send_message(b.chat_id, text)
+
+
+# 🎉 Режим праздника по времени
+async def birthday_party_by_time(bot):
+    async with async_session() as session:
+        result = await session.execute(select(Birthday))
+        birthdays = result.scalars().all()
+
+    today = date.today()
+    now = datetime.now().strftime("%H:%M")
+
+    birthday_people = []
+
+    for b in birthdays:
+        bday = b.birth_date.replace(year=today.year)
+        if bday == today:
+            birthday_people.append(b.full_name)
+
+    if not birthday_people:
+        return
+
+    name = ", ".join(birthday_people)
+
+    messages = {
+        "00:01": f"🎉🎉🎉 Сегодня день рождения у {name.upper()}!!! 🎂🥳",
+        "09:00": f"🥳 Не забываем поздравлять {name}!",
+        "12:00": f"🍰 Кто ещё не поздравил {name}? 😄",
+        "18:00": f"🎊 Праздник продолжается! {name} сегодня главный герой!",
+        "21:00": f"🔥 Завершаем день красиво — ещё раз поздравляем {name}!"
+    }
+
+    if now in messages:
+        await bot.send_message(birthdays[0].chat_id, messages[now])
