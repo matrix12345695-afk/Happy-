@@ -17,7 +17,7 @@ dp = Dispatcher()
 app = FastAPI()
 scheduler = AsyncIOScheduler()
 
-# Подключаем все роутеры
+# 🔌 Подключаем все роутеры
 dp.include_router(add_birthday.router)
 dp.include_router(list_birthdays.router)
 dp.include_router(delete_birthday.router)
@@ -52,13 +52,25 @@ async def self_ping():
 async def startup():
     await init_db()
 
-    # 🎂 Основные напоминания
-    scheduler.add_job(check_birthdays, "interval", hours=24, args=[bot])
+    # 🎂 Основные напоминания (раз в день)
+    scheduler.add_job(
+        check_birthdays,
+        trigger="interval",
+        hours=24,
+        args=[bot]
+    )
 
-    # 🎉 Режим праздника по времени
-    scheduler.add_job(birthday_party_by_time, "interval", minutes=1, args=[bot])
+    # 🎉 Режим праздника (каждую минуту проверка времени)
+    scheduler.add_job(
+        birthday_party_by_time,
+        trigger="interval",
+        minutes=1,
+        args=[bot]
+    )
 
     scheduler.start()
+
+    print("🚀 Бот запущен и готов к праздникам!")
 
     asyncio.create_task(dp.start_polling(bot))
     asyncio.create_task(self_ping())
