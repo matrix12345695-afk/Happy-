@@ -2,6 +2,7 @@ from datetime import date, datetime, timedelta
 from sqlalchemy import select
 from app.database import async_session
 from app.models import Birthday
+from app.utils.ai_text import generate_birthday_text
 import random
 
 
@@ -31,24 +32,28 @@ async def check_birthdays(bot):
             text = f"⚠️ Завтра день рождения у {b.full_name}!"
 
         elif delta == 0:
-            wishes = [
-                "🚀 Пусть все цели достигаются легко!",
-                "💰 Денег столько, чтобы считать надоело!",
-                "🔥 Жизнь как сериал — только без плохих сезонов!",
-                "🎯 Удача всегда на твоей стороне!",
-                "🏆 Успех приходит быстрее, чем ожидания!"
-            ]
+            try:
+                # 🤖 AI поздравление
+                text = await generate_birthday_text(b.full_name)
 
-            text = (
-                f"🎉🎉🎉 ВНИМАНИЕ!!! 🎉🎉🎉\n\n"
-                f"🔥 Сегодня день рождения у {b.full_name.upper()}!!! 🔥\n\n"
-                f"{random.choice(wishes)}\n\n"
-                f"🎂 Пусть жизнь будет сладкой как торт\n"
-                f"💰 Деньги приходят без задержек\n"
-                f"🚀 Цели достигаются быстрее дедлайнов\n"
-                f"💪 Здоровье крепче стали\n\n"
-                f"🥳 С ДНЁМ РОЖДЕНИЯ!!! 🥳"
-            )
+            except Exception as e:
+                print("AI error:", e)
+
+                # fallback если AI не сработал
+                wishes = [
+                    "🚀 Пусть все цели достигаются легко!",
+                    "💰 Денег столько, чтобы считать надоело!",
+                    "🔥 Жизнь как сериал — только без плохих сезонов!",
+                    "🎯 Удача всегда на твоей стороне!",
+                    "🏆 Успех приходит быстрее, чем ожидания!"
+                ]
+
+                text = (
+                    f"🎉🎉🎉 ВНИМАНИЕ!!! 🎉🎉🎉\n\n"
+                    f"🔥 Сегодня день рождения у {b.full_name.upper()}!!! 🔥\n\n"
+                    f"{random.choice(wishes)}\n\n"
+                    f"🥳 С ДНЁМ РОЖДЕНИЯ!!! 🥳"
+                )
 
         else:
             continue
