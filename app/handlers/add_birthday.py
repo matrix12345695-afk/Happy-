@@ -24,7 +24,7 @@ async def add_start(message: Message, state: FSMContext):
 @router.message(AddBirthday.name)
 async def get_name(message: Message, state: FSMContext):
     await state.update_data(name=message.text)
-    await message.answer("📅 Дата (ДД-ММ):")
+    await message.answer("📅 Введи дату (ДД-ММ или ДД-ММ-ГГГГ):")
     await state.set_state(AddBirthday.date)
 
 @router.message(AddBirthday.date)
@@ -32,20 +32,34 @@ async def get_date(message: Message, state: FSMContext):
     data = await state.get_data()
     name = data["name"]
 
-    try:
-        date = datetime.strptime(message.text, "%d-%m")
-        birth_date = date.replace(year=2000)
-    except:
-        await message.answer("❌ Ошибка формата")
+    text = message.text.strip()
+
+    # Поддержка разных форматов
+    formats = ["%d-%m", "%d-%m-%Y", "%d.%m", "%d.%m.%Y"]
+
+    birth_date = None
+
+    for fmt in formats:
+        try:
+            parsed = datetime.strptime(text, fmt)
+            if "%Y" not in fmt:
+                parsed = parsed.replace(year=2000)
+            birth_date = parsed.date()
+            break
+        except:
+            continue
+
+    if not birth_date:
+        await message.answer("❌ Неверный формат. Пример: 26-05 или 26-05-2000")
         return
 
     async with async_session() as session:
         session.add(Birthday(
             full_name=name,
-            birth_date=birth_date.date(),
+            birth_date=birth_date,
             chat_id=message.chat.id
         ))
         await session.commit()
 
-    await message.answer(f"✅ Добавлен {name}")
+    await message.answer(f"✅ Добавлен: {name} ({birth_date.strftime('%d-%m')})")
     await state.clear()
