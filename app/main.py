@@ -1,5 +1,7 @@
 import asyncio
 import os
+import httpx
+
 from aiogram import Bot, Dispatcher
 from fastapi import FastAPI
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -19,9 +21,30 @@ dp.include_router(add_birthday.router)
 dp.include_router(list_birthdays.router)
 dp.include_router(delete_birthday.router)
 
+
 @app.get("/")
 def root():
     return {"status": "ok"}
+
+
+# 🔁 Самопинг (чтобы не засыпал)
+async def self_ping():
+    url = os.getenv("RENDER_EXTERNAL_URL")
+
+    if not url:
+        print("❌ RENDER_EXTERNAL_URL не найден")
+        return
+
+    while True:
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                r = await client.get(url)
+                print(f"🔁 self-ping: {r.status_code}")
+        except Exception as e:
+            print(f"❌ ping error: {e}")
+
+        await asyncio.sleep(240)  # каждые 4 минуты
+
 
 @app.on_event("startup")
 async def startup():
@@ -31,3 +54,4 @@ async def startup():
     scheduler.start()
 
     asyncio.create_task(dp.start_polling(bot))
+    asyncio.create_task(self_ping())  # 👈 ВОТ ОН
