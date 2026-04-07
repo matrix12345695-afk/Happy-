@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from sqlalchemy import select
 from app.database import async_session
 from app.models import Birthday
@@ -11,7 +11,8 @@ async def check_birthdays(bot):
         result = await session.execute(select(Birthday))
         birthdays = result.scalars().all()
 
-    today = date.today()
+    now = datetime.utcnow() + timedelta(hours=5)
+    today = now.date()
 
     for b in birthdays:
         bday = b.birth_date.replace(year=today.year)
@@ -61,8 +62,9 @@ async def birthday_party_by_time(bot):
         result = await session.execute(select(Birthday))
         birthdays = result.scalars().all()
 
-    today = date.today()
-    now = datetime.now().strftime("%H:%M")
+    now_dt = datetime.utcnow() + timedelta(hours=5)
+    today = now_dt.date()
+    now = now_dt.strftime("%H:%M")
 
     birthday_people = []
 
