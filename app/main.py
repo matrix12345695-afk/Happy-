@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.init_db import init_db
-from app.handlers import add_birthday, list_birthdays, delete_birthday
+from app.handlers import add_birthday, list_birthdays, delete_birthday, import_birthdays
 from app.scheduler import check_birthdays
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -17,9 +17,11 @@ dp = Dispatcher()
 app = FastAPI()
 scheduler = AsyncIOScheduler()
 
+# Подключаем все роутеры
 dp.include_router(add_birthday.router)
 dp.include_router(list_birthdays.router)
 dp.include_router(delete_birthday.router)
+dp.include_router(import_birthdays.router)  # 👈 ВОТ ЭТО ДОБАВИЛИ
 
 
 @app.get("/")
@@ -54,4 +56,4 @@ async def startup():
     scheduler.start()
 
     asyncio.create_task(dp.start_polling(bot))
-    asyncio.create_task(self_ping())  # 👈 ВОТ ОН
+    asyncio.create_task(self_ping())
