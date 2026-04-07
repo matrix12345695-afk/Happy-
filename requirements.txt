@@ -6,3 +6,4 @@ asyncpg
 apscheduler
 python-dotenv
 httpx
+openai
