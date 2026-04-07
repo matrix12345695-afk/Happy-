@@ -8,7 +8,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.init_db import init_db
 from app.handlers import add_birthday, list_birthdays, delete_birthday, import_birthdays
-from app.scheduler import check_birthdays
+from app.scheduler import check_birthdays, birthday_party_by_time
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
@@ -21,7 +21,7 @@ scheduler = AsyncIOScheduler()
 dp.include_router(add_birthday.router)
 dp.include_router(list_birthdays.router)
 dp.include_router(delete_birthday.router)
-dp.include_router(import_birthdays.router)  # 👈 ВОТ ЭТО ДОБАВИЛИ
+dp.include_router(import_birthdays.router)
 
 
 @app.get("/")
@@ -52,7 +52,12 @@ async def self_ping():
 async def startup():
     await init_db()
 
+    # 🎂 Основные напоминания
     scheduler.add_job(check_birthdays, "interval", hours=24, args=[bot])
+
+    # 🎉 Режим праздника по времени
+    scheduler.add_job(birthday_party_by_time, "interval", minutes=1, args=[bot])
+
     scheduler.start()
 
     asyncio.create_task(dp.start_polling(bot))
